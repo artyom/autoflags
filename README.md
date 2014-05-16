@@ -1,4 +1,10 @@
 autoflags
 =========
 
-Populate go command line app flags from config struct
+Package autoflags provides a convenient way of exposing fields of struct as
+command line flags. Exposed fields should have `flag` tag attached:
+`flag:"flagName,usage string"`.
+
+For examples see [documentation][1].
+
+[1]: http://godoc.org/github.com/artyom/autoflags
