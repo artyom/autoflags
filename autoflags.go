@@ -2,8 +2,8 @@
 // command line flags. Exposed fields should have special tag attached:
 //
 //	var config = struct {
-//		Name    string `tag:"name,name of user"`
-//		Age     uint   `tag:"age"`
+//		Name    string `flag:"name,name of user"`
+//		Age     uint   `flag:"age"`
 //		Married bool   // this won't be exposed
 //	}{
 //		Name: "John Doe", // default values
