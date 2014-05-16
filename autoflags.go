@@ -18,7 +18,10 @@
 // 	}
 // 	flag.Parse()
 //
-// Now config struct has its fields populated from command line flags.
+// Now config struct has its fields populated from command line flags. Call the
+// program with flags to adjust default values:
+//
+// 	progname -name "Jane Roe" -age 29
 package autoflags
 
 import (
