@@ -22,6 +22,10 @@
 // program with flags to adjust default values:
 //
 // 	progname -name "Jane Roe" -age 29
+//
+// Package autoflags understands all basic types supported by flag's package
+// xxxVar functions: int, int64, uint, uint64, float64, bool, string,
+// time.Duration. Other types have to be handled with flag package as usual.
 package autoflags
 
 import (
