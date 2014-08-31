@@ -2,6 +2,7 @@ package autoflags
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -77,6 +78,38 @@ func TestDefineParse(t *testing.T) {
 		t.Fatalf("result differs after parsing arguments; "+
 			"want: %+v, got %+v", reference, conf)
 	}
+}
+
+func TestDefineFlagSetErrInvalidFlagSet(t *testing.T) {
+	if err := DefineFlagSet(nil, &struct{}{}); err != ErrInvalidFlagSet {
+		t.Fatalf("should fail with error ErrInvalidFlagSet, got %q", err)
+	}
+}
+
+func ExampleDefineFlagSet() {
+	fs := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	var config = struct {
+		Name    string `flag:"name,name of user"`
+		Age     uint   `flag:"age"`
+		Married bool   // this won't be exposed
+	}{
+		Name: "John Doe", // default values
+		Age:  34,
+	}
+	args := []string{"-name", "Jane Roe", "-age", "29"}
+
+	fmt.Printf("before:\n%+v\n", config)
+	fmt.Println("define err:", DefineFlagSet(fs, &config))
+	fmt.Println("parse err:", fs.Parse(args))
+	fmt.Printf("after:\n%+v\n", config)
+	// Output:
+	//
+	// before:
+	// {Name:John Doe Age:34 Married:false}
+	// define err: <nil>
+	// parse err: <nil>
+	// after:
+	// {Name:Jane Roe Age:29 Married:false}
 }
 
 type config struct {

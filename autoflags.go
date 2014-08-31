@@ -42,12 +42,25 @@ var (
 	// ErrInvalidArgument is returned when passed argument is nil pointer or
 	// pointer to a non-struct value
 	ErrInvalidArgument = errors.New("non-nil pointer to struct expected")
+	// ErrInvalidFlagSet is returned when FlagSet argument passed to
+	// DefineFlagSet is nil
+	ErrInvalidFlagSet = errors.New("non-nil FlagSet expected")
 )
 
 // Define takes pointer to struct and declares flags for its flag-tagged fields.
 // Valid tags have the following form: `flag:"flagname"` or
 // `flag:"flagname,usage string"`.
 func Define(config interface{}) error {
+	return DefineFlagSet(flag.CommandLine, config)
+}
+
+// DefineFlagSet takes pointer to struct and declares flags for its flag-tagged
+// fields on given FlagSet. Valid tags have to following form: `flag:"flagname"`
+// or `flag:"flagname,usage string"`.
+func DefineFlagSet(fs *flag.FlagSet, config interface{}) error {
+	if fs == nil {
+		return ErrInvalidFlagSet
+	}
 	st := reflect.ValueOf(config)
 	if st.Kind() != reflect.Ptr {
 		return ErrPointerWanted
@@ -77,21 +90,21 @@ func Define(config interface{}) error {
 		addr := val.Addr()
 		switch d := val.Interface().(type) {
 		case int:
-			flag.IntVar(addr.Interface().(*int), name, d, usage)
+			fs.IntVar(addr.Interface().(*int), name, d, usage)
 		case int64:
-			flag.Int64Var(addr.Interface().(*int64), name, d, usage)
+			fs.Int64Var(addr.Interface().(*int64), name, d, usage)
 		case uint:
-			flag.UintVar(addr.Interface().(*uint), name, d, usage)
+			fs.UintVar(addr.Interface().(*uint), name, d, usage)
 		case uint64:
-			flag.Uint64Var(addr.Interface().(*uint64), name, d, usage)
+			fs.Uint64Var(addr.Interface().(*uint64), name, d, usage)
 		case float64:
-			flag.Float64Var(addr.Interface().(*float64), name, d, usage)
+			fs.Float64Var(addr.Interface().(*float64), name, d, usage)
 		case bool:
-			flag.BoolVar(addr.Interface().(*bool), name, d, usage)
+			fs.BoolVar(addr.Interface().(*bool), name, d, usage)
 		case string:
-			flag.StringVar(addr.Interface().(*string), name, d, usage)
+			fs.StringVar(addr.Interface().(*string), name, d, usage)
 		case time.Duration:
-			flag.DurationVar(addr.Interface().(*time.Duration), name, d, usage)
+			fs.DurationVar(addr.Interface().(*time.Duration), name, d, usage)
 		}
 	}
 	return nil
