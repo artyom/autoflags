@@ -55,8 +55,8 @@ func Define(config interface{}) error {
 }
 
 // DefineFlagSet takes pointer to struct and declares flags for its flag-tagged
-// fields on given FlagSet. Valid tags have to following form: `flag:"flagname"`
-// or `flag:"flagname,usage string"`.
+// fields on given FlagSet. Valid tags have the following form:
+// `flag:"flagname"` or `flag:"flagname,usage string"`.
 func DefineFlagSet(fs *flag.FlagSet, config interface{}) error {
 	if fs == nil {
 		return ErrInvalidFlagSet
