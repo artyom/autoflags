@@ -25,7 +25,7 @@
 //
 // Package autoflags understands all basic types supported by flag's package
 // xxxVar functions: int, int64, uint, uint64, float64, bool, string,
-// time.Duration. Types implmenting flag.Value interface are also supported.
+// time.Duration. Types implementing flag.Value interface are also supported.
 package autoflags // import "github.com/artyom/autoflags"
 
 import (
