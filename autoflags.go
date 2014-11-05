@@ -25,8 +25,8 @@
 //
 // Package autoflags understands all basic types supported by flag's package
 // xxxVar functions: int, int64, uint, uint64, float64, bool, string,
-// time.Duration. Other types have to be handled with flag package as usual.
-package autoflags
+// time.Duration. Types implmenting flag.Value interface are also supported.
+package autoflags // import "github.com/artyom/autoflags"
 
 import (
 	"errors"
@@ -69,6 +69,7 @@ func DefineFlagSet(fs *flag.FlagSet, config interface{}) error {
 	if !st.IsValid() || st.Type().Kind() != reflect.Struct {
 		return ErrInvalidArgument
 	}
+	flagValueType := reflect.TypeOf((*flag.Value)(nil)).Elem()
 	for i := 0; i < st.NumField(); i++ {
 		val := st.Field(i)
 		if !val.CanAddr() {
@@ -88,6 +89,10 @@ func DefineFlagSet(fs *flag.FlagSet, config interface{}) error {
 			name, usage = flagData[0], flagData[1]
 		}
 		addr := val.Addr()
+		if addr.Type().Implements(flagValueType) {
+			fs.Var(addr.Interface().(flag.Value), name, usage)
+			continue
+		}
 		switch d := val.Interface().(type) {
 		case int:
 			fs.IntVar(addr.Interface().(*int), name, d, usage)

@@ -60,6 +60,7 @@ func TestDefineParse(t *testing.T) {
 		Float64:  1.55,
 		Bool:     true,
 		Duration: 15 * time.Minute,
+		MySlice:  CustomFlag{"a", "b"},
 	}
 	conf := configBig{}
 	if err := Define(&conf); err != nil {
@@ -70,6 +71,8 @@ func TestDefineParse(t *testing.T) {
 		"-int64", "107374182400", "-uint", "7",
 		"-uint64", "24", "-float64", "1.55", "-bool",
 		"-duration", "15m",
+		"-slice", "a",
+		"-slice", "b",
 	}
 	if err := flag.CommandLine.Parse(args); err != nil {
 		t.Fatal("parsing failed:", err)
@@ -126,8 +129,19 @@ type configBig struct {
 	Float64  float64       `flag:"float64"`
 	Bool     bool          `flag:"bool"`
 	Duration time.Duration `flag:"duration"`
+	MySlice  CustomFlag    `flag:"slice"` // custom flag.Value implementation
 
 	NonAddressable unsafe.Pointer `flag:"nil"` // non-addressable
 	Invalid        bool           `flag:""`    // invalid flag definition
 	NonExposed     int            // does not have flag attached
+}
+
+// CustomFlag implements flag.Value interface and provides building string slice
+// by specifying flag multiple times
+type CustomFlag []string
+
+func (c *CustomFlag) String() string { return fmt.Sprint(*c) }
+func (c *CustomFlag) Set(value string) error {
+	*c = append(*c, value)
+	return nil
 }
