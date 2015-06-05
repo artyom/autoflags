@@ -14,7 +14,7 @@
 // flags with flag package and call flag.Parse() as usually:
 //
 // 	if err := autoflags.Define(&config) ; err != nil {
-// 		log.Fatal(err)
+// 		panic(err)
 // 	}
 // 	flag.Parse()
 //
