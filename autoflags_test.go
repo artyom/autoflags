@@ -17,17 +17,23 @@ func ResetForTesting(usage func()) {
 
 func TestDefineErrPointerWanted(t *testing.T) {
 	ResetForTesting(nil)
-	if err := Define(1); err != ErrPointerWanted {
-		t.Fatalf("should fail with error ErrPointerWanted, got %q", err)
-	}
+	defer func() {
+		if x := recover(); x != errPointerWanted {
+			t.Fatalf("should have panicked with errPointerWanted, got %v", x)
+		}
+	}()
+	Define(1)
 }
 
 func TestDefineErrInvalidArgument(t *testing.T) {
 	ResetForTesting(nil)
 	var testConfig *struct{}
-	if err := Define(testConfig); err != ErrInvalidArgument {
-		t.Fatalf("should fail with error ErrInvalidArgument, got %q", err)
-	}
+	defer func() {
+		if x := recover(); x != errInvalidArgument {
+			t.Fatalf("should have panicked with errInvalidArgument, got %v", x)
+		}
+	}()
+	Define(testConfig)
 }
 
 func TestDefineParseEmpty(t *testing.T) {
@@ -37,9 +43,7 @@ func TestDefineParseEmpty(t *testing.T) {
 		Int:    42,
 	}
 	conf := reference
-	if err := Define(&conf); err != nil {
-		t.Fatal("unexpected error:", err)
-	}
+	Define(&conf)
 	if err := flag.CommandLine.Parse([]string{}); err != nil {
 		t.Fatal("parsing failed:", err)
 	}
@@ -63,9 +67,7 @@ func TestDefineParse(t *testing.T) {
 		MySlice:  CustomFlag{"a", "b"},
 	}
 	conf := configBig{}
-	if err := Define(&conf); err != nil {
-		t.Fatal("unexpected error:", err)
-	}
+	Define(&conf)
 	args := []string{
 		"-string", "whales", "-int", "42",
 		"-int64", "107374182400", "-uint", "7",
@@ -84,9 +86,25 @@ func TestDefineParse(t *testing.T) {
 }
 
 func TestDefineFlagSetErrInvalidFlagSet(t *testing.T) {
-	if err := DefineFlagSet(nil, &struct{}{}); err != ErrInvalidFlagSet {
-		t.Fatalf("should fail with error ErrInvalidFlagSet, got %q", err)
-	}
+	defer func() {
+		if x := recover(); x != errInvalidFlagSet {
+			t.Fatalf("should have panicked with errInvalidFlagSet, got %v", x)
+		}
+	}()
+	DefineFlagSet(nil, &struct{}{})
+}
+
+func TestUnsupportedFlagType(t *testing.T) {
+	ResetForTesting(nil)
+	defer func() {
+		if x := recover(); x == nil {
+			t.Fatalf("should have panicked with unsupported type, got %v", x)
+		}
+	}()
+	config := struct {
+		NonAddressable unsafe.Pointer `flag:"nil"` // non-addressable
+	}{}
+	Define(&config)
 }
 
 func ExampleDefineFlagSet() {
@@ -99,19 +117,19 @@ func ExampleDefineFlagSet() {
 		Name: "John Doe", // default values
 		Age:  34,
 	}
+	DefineFlagSet(fs, &config)
+
 	args := []string{"-name", "Jane Roe", "-age", "29"}
 
-	fmt.Printf("before:\n%+v\n", config)
-	fmt.Println("define err:", DefineFlagSet(fs, &config))
-	fmt.Println("parse err:", fs.Parse(args))
-	fmt.Printf("after:\n%+v\n", config)
+	fmt.Printf("before parsing flags:\n%+v\n", config)
+	fs.Parse(args)
+	fmt.Printf("\nafter parsing flags:\n%+v\n", config)
 	// Output:
 	//
-	// before:
+	// before parsing flags:
 	// {Name:John Doe Age:34 Married:false}
-	// define err: <nil>
-	// parse err: <nil>
-	// after:
+	//
+	// after parsing flags:
 	// {Name:Jane Roe Age:29 Married:false}
 }
 
@@ -131,9 +149,8 @@ type configBig struct {
 	Duration time.Duration `flag:"duration"`
 	MySlice  CustomFlag    `flag:"slice"` // custom flag.Value implementation
 
-	NonAddressable unsafe.Pointer `flag:"nil"` // non-addressable
-	Invalid        bool           `flag:""`    // invalid flag definition
-	NonExposed     int            // does not have flag attached
+	Empty      bool `flag:""` // empty flag definition
+	NonExposed int  // does not have flag attached
 }
 
 // CustomFlag implements flag.Value interface and provides building string slice

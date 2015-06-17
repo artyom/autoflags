@@ -6,16 +6,15 @@
 //		Age     uint   `flag:"age"`
 //		Married bool   // this won't be exposed
 //	}{
-//		Name: "John Doe", // default values
+//		// default values
+//		Name: "John Doe",
 //		Age:  34,
 //	}
 //
 // After declaring your flags and their default values as above, just register
 // flags with flag package and call flag.Parse() as usually:
 //
-// 	if err := autoflags.Define(&config) ; err != nil {
-// 		panic(err)
-// 	}
+// 	autoflags.Define(&config)
 // 	flag.Parse()
 //
 // Now config struct has its fields populated from command line flags. Call the
@@ -26,60 +25,72 @@
 // Package autoflags understands all basic types supported by flag's package
 // xxxVar functions: int, int64, uint, uint64, float64, bool, string,
 // time.Duration. Types implementing flag.Value interface are also supported.
+// Attaching non-empty `flag` tag to field of unsupported type would result in
+// panic.
 package autoflags // import "github.com/artyom/autoflags"
 
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"reflect"
 	"strings"
 	"time"
 )
 
 var (
-	// ErrPointerWanted is returned when passed argument is not a pointer
-	ErrPointerWanted = errors.New("pointer expected")
-	// ErrInvalidArgument is returned when passed argument is nil pointer or
+	// errPointerWanted is returned when passed argument is not a pointer
+	errPointerWanted = errors.New("autoflags: pointer expected")
+	// errInvalidArgument is returned when passed argument is nil pointer or
 	// pointer to a non-struct value
-	ErrInvalidArgument = errors.New("non-nil pointer to struct expected")
-	// ErrInvalidFlagSet is returned when FlagSet argument passed to
+	errInvalidArgument = errors.New("autoflags: non-nil pointer to struct expected")
+	// errInvalidFlagSet is returned when FlagSet argument passed to
 	// DefineFlagSet is nil
-	ErrInvalidFlagSet = errors.New("non-nil FlagSet expected")
+	errInvalidFlagSet = errors.New("autoflags: non-nil FlagSet expected")
+	errInvalidField   = errors.New("autoflags: field is of unsupported type")
 )
 
 // Define takes pointer to struct and declares flags for its flag-tagged fields.
 // Valid tags have the following form: `flag:"flagname"` or
 // `flag:"flagname,usage string"`.
-func Define(config interface{}) error {
-	return DefineFlagSet(flag.CommandLine, config)
-}
+//
+// Define would panic if given unsupported/invalid argument  (anything but
+// non-nil pointer to struct) or if any field with `flag` tag attached is of
+// unsupported type by flag package (consider implementing flag.Value interface
+// for such fields).
+func Define(config interface{}) { DefineFlagSet(flag.CommandLine, config) }
 
 // DefineFlagSet takes pointer to struct and declares flags for its flag-tagged
 // fields on given FlagSet. Valid tags have the following form:
 // `flag:"flagname"` or `flag:"flagname,usage string"`.
-func DefineFlagSet(fs *flag.FlagSet, config interface{}) error {
+//
+// DefineFlagSet would panic if given unsupported/invalid config argument
+// (anything but non-nil pointer to struct) or if any config's field with `flag`
+// tag attached is of unsupported type by flag package (consider implementing
+// flag.Value interface for such fields).
+func DefineFlagSet(fs *flag.FlagSet, config interface{}) {
 	if fs == nil {
-		return ErrInvalidFlagSet
+		panic(errInvalidFlagSet)
 	}
 	st := reflect.ValueOf(config)
 	if st.Kind() != reflect.Ptr {
-		return ErrPointerWanted
+		panic(errPointerWanted)
 	}
 	st = reflect.Indirect(st)
 	if !st.IsValid() || st.Type().Kind() != reflect.Struct {
-		return ErrInvalidArgument
+		panic(errInvalidArgument)
 	}
 	flagValueType := reflect.TypeOf((*flag.Value)(nil)).Elem()
 	for i := 0; i < st.NumField(); i++ {
-		val := st.Field(i)
-		if !val.CanAddr() {
-			continue
-		}
 		typ := st.Type().Field(i)
 		var name, usage string
 		tag := typ.Tag.Get("flag")
-		if len(tag) == 0 {
+		if tag == "" {
 			continue
+		}
+		val := st.Field(i)
+		if !val.CanAddr() {
+			panic(errInvalidField)
 		}
 		flagData := strings.SplitN(tag, ",", 2)
 		switch len(flagData) {
@@ -110,7 +121,8 @@ func DefineFlagSet(fs *flag.FlagSet, config interface{}) error {
 			fs.StringVar(addr.Interface().(*string), name, d, usage)
 		case time.Duration:
 			fs.DurationVar(addr.Interface().(*time.Duration), name, d, usage)
+		default:
+			panic(fmt.Sprintf("autoflags: field with flag tag value %q is of unsupported type", name))
 		}
 	}
-	return nil
 }
