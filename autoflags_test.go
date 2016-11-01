@@ -110,7 +110,7 @@ func TestUnsupportedFlagType(t *testing.T) {
 func ExampleDefineFlagSet() {
 	fs := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	var config = struct {
-		Name    string `flag:"name,name of user"`
+		Name    string `flag:"name,user name"`
 		Age     uint   `flag:"age"`
 		Married bool   // this won't be exposed
 	}{
