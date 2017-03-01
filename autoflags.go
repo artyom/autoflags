@@ -62,6 +62,12 @@ var (
 // interface for such attributes).
 func Define(config interface{}) { DefineFlagSet(flag.CommandLine, config) }
 
+// Parse is a shortcut for:
+//
+// 	autoflags.Define(&args)
+// 	flag.Parse()
+func Parse(config interface{}) { Define(config); flag.Parse() }
+
 // DefineFlagSet takes pointer to struct and declares flags for its flag-tagged
 // fields on given FlagSet. Valid tags have one of the following formats:
 //
