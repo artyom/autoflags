@@ -14,13 +14,13 @@
 // After declaring your flags and their default values as above, just register
 // flags with autoflags.Define and call flag.Parse() as usual:
 //
-// 	autoflags.Define(&config)
-// 	flag.Parse()
+//	autoflags.Define(&config)
+//	flag.Parse()
 //
 // Now config struct has its fields populated from command line flags. Call the
 // program with flags to override default values:
 //
-// 	progname -name "Jane Roe" -age 29
+//	progname -name "Jane Roe" -age 29
 //
 // Package autoflags understands all basic types supported by flag's package
 // xxxVar functions: int, int64, uint, uint64, float64, bool, string,
@@ -53,8 +53,8 @@ var (
 // Define takes pointer to struct and declares flags for its flag-tagged fields.
 // Valid tags have one of the following formats:
 //
-// 	`flag:"flagname"`
-// 	`flag:"flagname,usage string"`
+//	`flag:"flagname"`
+//	`flag:"flagname,usage string"`
 //
 // Define would panic if given unsupported/invalid argument  (anything but
 // non-nil pointer to struct) or if any config attribute with `flag` tag is of
@@ -64,15 +64,15 @@ func Define(config interface{}) { DefineFlagSet(flag.CommandLine, config) }
 
 // Parse is a shortcut for:
 //
-// 	autoflags.Define(&args)
-// 	flag.Parse()
+//	autoflags.Define(&args)
+//	flag.Parse()
 func Parse(config interface{}) { Define(config); flag.Parse() }
 
 // DefineFlagSet takes pointer to struct and declares flags for its flag-tagged
 // fields on given FlagSet. Valid tags have one of the following formats:
 //
-// 	`flag:"flagname"`
-// 	`flag:"flagname,usage string"`
+//	`flag:"flagname"`
+//	`flag:"flagname,usage string"`
 //
 // DefineFlagSet would panic if given unsupported/invalid config argument
 // (anything but non-nil pointer to struct) or if any config attribute with
